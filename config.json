@@ -1,0 +1,5 @@
+{
+    "sourceDir": "source/_posts/*",
+    "targetDir": "website",
+    "templateFile": "template/tpl.html"
+}
