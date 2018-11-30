@@ -21,6 +21,7 @@ func main() {
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal([]byte(byteValue), &result)
 	sourceDir := result["sourceDir"].(string)
+	fromDir := strings.Replace(sourceDir, "*", "", 1)
 	files, err := filepath.Glob(sourceDir)
 	checkErr(err)
 	targetDir := result["targetDir"].(string)
@@ -42,7 +43,7 @@ func main() {
 			htmlString := strings.Replace(string(template), "$body", html, 1)
 			htmlFileName := strings.TrimSuffix(_file, ext)
 			ioutil.WriteFile(targetDir+"/"+htmlFileName+htmlExt, []byte(htmlString), 0644)
-			fmt.Printf("build file from %s to "+targetDir+"/"+htmlFileName+htmlExt+" done!\n\n", strings.Replace(sourceDir, "*", "", 1)+htmlFileName+ext)
+			fmt.Printf("build file from %s to "+targetDir+"/"+htmlFileName+htmlExt+" done!\n\n", fromDir+htmlFileName+ext)
 		}
 	}
 }
