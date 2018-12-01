@@ -3,7 +3,10 @@ Build html file from markdown folder
 
 ### Usage
 
-create config.json
+
+- create markdown files folder
+- create html template
+- create config.json
 
 for example:
 
@@ -15,6 +18,7 @@ for example:
 }
 ```
 
+### run 
 ```text
 go run ./mksite.go
 ```
