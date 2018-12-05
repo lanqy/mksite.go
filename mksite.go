@@ -30,6 +30,11 @@ func main() {
 		Created     string
 	}
 
+	type Item struct {
+		Title string `json:"title"`
+		Link  string `json:"link"`
+	}
+
 	defer jsonFile.Close()
 
 	var result map[string]interface{}
@@ -57,7 +62,7 @@ func main() {
 
 	var listArr []map[string]interface{}
 
-	for i, file := range files {
+	for _, file := range files {
 
 		ext := filepath.Ext(file)
 		_file := filepath.Base(file)
@@ -100,9 +105,6 @@ func main() {
 			item["title"] = string(d.Title)
 			item["link"] = fullPath + "/" + fileName
 
-			fmt.Println(item)
-			fmt.Println(i)
-
 			listArr = append(listArr, item)
 
 			ioutil.WriteFile(fullPath+"/"+fileName, []byte(htmlString), 0644)
@@ -114,6 +116,33 @@ func main() {
 	jsonbytes, _ := json.Marshal(listArr)
 
 	ioutil.WriteFile(dataJSON, []byte(jsonbytes), 0644)
+
+	// Open our jsonFile
+	dataFile, err := os.Open("data.json")
+
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("Successfully Opened data.json")
+
+	// defer the closing of our jsonFile so that we can parse it later on
+	defer dataFile.Close()
+
+	byteValues, _ := ioutil.ReadAll(dataFile)
+
+	var results []Item
+
+	json.Unmarshal([]byte(byteValues), &results)
+
+	fmt.Println(results)
+
+	for _, v := range results {
+		fmt.Println(v.Title)
+		fmt,Println(v.Link)
+	}
+
 }
 
 func createFolder(name string) {
