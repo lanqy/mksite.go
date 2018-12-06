@@ -28,4 +28,4 @@ for example:
 go run ./mksite.go
 ```
 
-then you got a website on website folder
+then you got a website on website folder :)
