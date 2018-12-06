@@ -12,9 +12,14 @@ for example:
 
 ```text
 {
+    "siteName": "site name here",
+    "staticDir": "static",
     "sourceDir": "source/_posts/*",
     "targetDir": "website",
-    "templateFile": "template/tpl.html"
+    "pageSize": 30,
+    "templateFile": "template/tpl.html",
+    "indexTemplateFile": "template/index.html",
+    "itemTemplateFile": "template/item.html"
 }
 ```
 
