@@ -27,3 +27,5 @@ for example:
 ```text
 go run ./mksite.go
 ```
+
+then you got a website on website folder
