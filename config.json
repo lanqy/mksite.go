@@ -1,5 +1,5 @@
 {
-    "siteName": "让思绪停留在这里",
+    "siteName": "site name here",
     "staticDir": "static",
     "sourceDir": "source/_posts/*",
     "targetDir": "website",

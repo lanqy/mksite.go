@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -85,6 +86,7 @@ func main() {
 			var d data
 			var fullPath = targetDir
 			body, _ := ioutil.ReadFile(file)
+
 			template, _ := ioutil.ReadFile(templateFile)
 			content, err := fmatter.Parse([]byte(body), &d)
 
@@ -141,13 +143,10 @@ func main() {
 
 	ioutil.WriteFile(dataJSON, []byte(jsonbytes), 0644)
 
-	// Open our jsonFile
 	dataFile, err := os.Open(dataJSON)
 
-	// if we os.Open returns an error then handle it
 	checkErr(err)
 
-	// defer the closing of our jsonFile so that we can parse it later on
 	defer dataFile.Close()
 
 	byteValues, _ := ioutil.ReadAll(dataFile)
@@ -159,6 +158,15 @@ func main() {
 	Copy(staticDir, targetDir)
 
 	var buffer bytes.Buffer
+
+	sort.Slice(results, func(i, j int) bool {
+		p1 := results[i].Created
+		p2 := results[j].Created
+		return p1 > p2
+	})
+	//	for _, m := range results {
+	//		fmt.Println(m.Created)
+	//	}
 
 	for _, v := range results {
 		b, _ := ioutil.ReadFile(itemTemplateFile)
