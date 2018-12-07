@@ -55,8 +55,9 @@ func main() {
 	var BODY = "$body"
 	var LINK = "$link"
 	var NAME = "$name"
-	var POST = "$POST"
+	var POST = "$post"
 	var CREATED = "$created"
+	var SITENAME = "$sitename"
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal([]byte(byteValue), &result)
@@ -71,11 +72,12 @@ func main() {
 	indexTemplateFile := result["indexTemplateFile"].(string)
 	itemTemplateFile := result["itemTemplateFile"].(string)
 	staticDir := result["staticDir"].(string)
+	sitename := result["siteName"].(string)
 
 	createFolder(targetDir)
 
-	re := regexp.MustCompile("(\\d\\d\\d\\d)(/|-)(0?[1-9]|1[012])(/|-)(0?[1-9]|[12][0-9]|3[01])") // date regexp
-
+	// date regexp pattern
+	re := regexp.MustCompile("(\\d\\d\\d\\d)(/|-)(0?[1-9]|1[012])(/|-)(0?[1-9]|[12][0-9]|3[01])")
 	var listArr []map[string]interface{}
 
 	for _, file := range files {
@@ -159,14 +161,12 @@ func main() {
 
 	var buffer bytes.Buffer
 
+	// sort json results
 	sort.Slice(results, func(i, j int) bool {
 		p1 := results[i].Created
 		p2 := results[j].Created
 		return p1 > p2
 	})
-	//	for _, m := range results {
-	//		fmt.Println(m.Created)
-	//	}
 
 	for _, v := range results {
 		b, _ := ioutil.ReadFile(itemTemplateFile)
@@ -177,8 +177,8 @@ func main() {
 	}
 
 	index, _ := ioutil.ReadFile(indexTemplateFile)
-	var indexContent = replace(string(index), POST, buffer.String(), 1)
-
+	var postHTML = replace(string(index), POST, buffer.String(), 1)
+	var indexContent = replace(string(postHTML), SITENAME, sitename, 1)
 	ioutil.WriteFile(targetDir+"/"+HOME, []byte(indexContent), 0644)
 
 	fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
