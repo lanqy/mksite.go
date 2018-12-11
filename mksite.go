@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/daryl/fmatter"
+	"github.com/mgutz/ansi"
 	"github.com/russross/blackfriday"
 	"io"
 	"io/ioutil"
@@ -12,9 +13,26 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
+
+type data struct {
+	Title       string
+	Description string
+	Author      string
+	Created     string
+}
+
+// Item struck
+type Item struct {
+	Title   string `json:"title"`
+	Link    string `json:"link"`
+	Created string `json:"created"`
+}
 
 func main() {
 
@@ -27,19 +45,6 @@ func main() {
 	jsonFile, err := os.Open(configFile)
 
 	checkErr(err)
-
-	type data struct {
-		Title       string
-		Description string
-		Author      string
-		Created     string
-	}
-
-	type Item struct {
-		Title   string `json:"title"`
-		Link    string `json:"link"`
-		Created string `json:"created"`
-	}
 
 	defer jsonFile.Close()
 
@@ -79,6 +84,8 @@ func main() {
 	// date regexp pattern
 	re := regexp.MustCompile("(\\d\\d\\d\\d)(/|-)(0?[1-9]|1[012])(/|-)(0?[1-9]|[12][0-9]|3[01])")
 	var listArr []map[string]interface{}
+
+	beginTime := time.Now()
 
 	for _, file := range files {
 
@@ -137,7 +144,13 @@ func main() {
 
 			ioutil.WriteFile(fullPath+"/"+fileName, []byte(htmlString), 0644)
 
-			fmt.Printf("\nBuilding file from %s to "+fullPath+"/"+fileName+" done!\n", fromDir+htmlFileName+ext)
+			if runtime.GOOS == "windows" {
+				fmt.Printf("\nBuilding file from %s to "+fullPath+"/"+fileName+" done!\n", fromDir+htmlFileName+ext)
+			} else {
+				text := ansi.Color("\nBuilding file from "+fromDir+htmlFileName+ext+" to "+fullPath+"/"+fileName+" done!\n", "green+b")
+				fmt.Println(text)
+			}
+
 		}
 	}
 
@@ -157,14 +170,16 @@ func main() {
 
 	json.Unmarshal([]byte(byteValues), &results)
 
-	Copy(staticDir, targetDir)
+	Copy(staticDir, targetDir) // copy static file into targetDir
 
 	var buffer bytes.Buffer
 
 	// sort json results
 	sort.Slice(results, func(i, j int) bool {
-		p1 := results[i].Created
-		p2 := results[j].Created
+		p1, err := strconv.Atoi(replace(results[i].Created, "-", "", 3)) // 2018-12-10 to 20181210
+		checkErr(err)
+		p2, err := strconv.Atoi(replace(results[j].Created, "-", "", 3))
+		checkErr(err)
 		return p1 > p2
 	})
 
@@ -181,8 +196,14 @@ func main() {
 	var indexContent = replace(string(postHTML), SITENAME, sitename, 1)
 	ioutil.WriteFile(targetDir+"/"+HOME, []byte(indexContent), 0644)
 
-	fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
-
+	if runtime.GOOS == "windows" {
+		fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
+		fmt.Printf("\nBuild in %s \n\n", time.Since(beginTime))
+	} else {
+		msg := ansi.Color("\nBuilding home file to "+targetDir+"/"+HOME, "green+b")
+		fmt.Println(msg)
+		fmt.Printf("\nBuild in %s \n\n", time.Since(beginTime))
+	}
 }
 
 // Copy copies src to dest, doesn't matter if src is a directory or a file
