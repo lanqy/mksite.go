@@ -50,19 +50,19 @@ func main() {
 
 	var result map[string]interface{}
 
-	var htmlExt = ".html"
-	var mdExt = ".md"
-	var HOME = "index.html"
+	const htmlExt = ".html"
+	const mdExt = ".md"
+	const HOME = "index.html"
 
 	// placeholder
-	var TITLE = "$title"
-	var DESCRIPTION = "$description"
-	var BODY = "$body"
-	var LINK = "$link"
-	var NAME = "$name"
-	var POST = "$post"
-	var CREATED = "$created"
-	var SITENAME = "$sitename"
+	const TITLE = "$title"
+	const DESCRIPTION = "$description"
+	const BODY = "$body"
+	const LINK = "$link"
+	const NAME = "$name"
+	const POST = "$post"
+	const CREATED = "$created"
+	const SITENAME = "$sitename"
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal([]byte(byteValue), &result)
