@@ -16,7 +16,6 @@ for example:
     "staticDir": "static",
     "sourceDir": "source/_posts/*",
     "targetDir": "website",
-    "pageSize": 30,
     "templateFile": "template/tpl.html",
     "indexTemplateFile": "template/index.html",
     "itemTemplateFile": "template/item.html"
