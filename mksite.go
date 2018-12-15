@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/daryl/fmatter"
 	"github.com/mgutz/ansi"
@@ -34,6 +35,27 @@ type Item struct {
 	Created string `json:"created"`
 }
 
+type Feed struct {
+	XMLName xml.Name `xml:"feed"`
+	Xmlns   string   `xml:"xmlns,attr"`
+	Title   string   `xml:"title"`
+	Link    link     `xml:"link"`
+	Summary string   `xml:"summary"`
+	Entrys  []entry  `xml:"entry"`
+}
+
+type entry struct {
+	Title   string `xml:"title"`
+	Link    link   `xml:"link"`
+	Summary string `xml:"summary"`
+	Author  string `xml:"author"`
+}
+
+type link struct {
+	XMLName xml.Name `xml:link`
+	Href    string   `xml:"href,attr"`
+}
+
 func main() {
 
 	// config json file
@@ -41,6 +63,9 @@ func main() {
 
 	// data json file
 	dataJSON := "data.json"
+
+	// atom.xml file
+	atomFile := "atom.xml"
 
 	jsonFile, err := os.Open(configFile)
 
@@ -63,6 +88,8 @@ func main() {
 	const POST = "$post"
 	const CREATED = "$created"
 	const SITENAME = "$sitename"
+	const DOMAIN = "https://lanqy.xyz"
+	const XMLNS = "http://www.w3.org/2005/Atom"
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal([]byte(byteValue), &result)
@@ -184,12 +211,21 @@ func main() {
 		return p1 > p2
 	})
 
+	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: link{Href: DOMAIN}, Summary: sitename}
+
 	for _, v := range results {
 		items, _ := ioutil.ReadFile(itemTemplateFile)
 		str := strings.NewReplacer(NAME, string(v.Title), LINK, string(v.Link), CREATED, string(v.Created))
 		list := str.Replace(string(items))
+		feedrss.Entrys = append(feedrss.Entrys, entry{string(v.Title), link{Href: string(v.Link)}, string(v.Title), "lanqy"})
 		buffer.WriteString(list)
 	}
+
+	op, err := xml.MarshalIndent(feedrss, "  ", "    ")
+
+	checkErr(err)
+
+	ioutil.WriteFile(atomFile, []byte(xml.Header+string(op)), 0644) // create atom.xml
 
 	index, _ := ioutil.ReadFile(indexTemplateFile)
 	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename)
