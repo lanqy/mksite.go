@@ -202,7 +202,8 @@ func main() {
 	} else {
 		msg := ansi.Color("\nBuilding home file to "+targetDir+"/"+HOME, "green+b")
 		fmt.Println(msg)
-		fmt.Printf("\nBuild in %s \n\n", time.Since(beginTime))
+		runtime := ansi.Color("\nBuild in "+time.Since(beginTime).String(), "green+b")
+		fmt.Println(runtime)
 	}
 }
 
