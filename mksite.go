@@ -103,9 +103,10 @@ func main() {
 
 			html := string(blackfriday.MarkdownCommon([]byte(content)))
 
-			replaceTitle := replace(string(template), TITLE, string(d.Title), 1)
-			replaceDes := replace(string(replaceTitle), DESCRIPTION, string(d.Description), 1)
-			htmlString := replace(string(replaceDes), BODY, html, 1)
+			replacer := strings.NewReplacer(TITLE, string(d.Title), DESCRIPTION, string(d.Description), BODY, html)
+
+			htmlString := replacer.Replace(string(template))
+
 			htmlFileName := strings.TrimSuffix(_file, ext)
 
 			fileName := "index" + htmlExt
@@ -184,16 +185,15 @@ func main() {
 	})
 
 	for _, v := range results {
-		b, _ := ioutil.ReadFile(itemTemplateFile)
-		var replaceTitle = replace(string(b), NAME, string(v.Title), 1)
-		var replaceLink = replace(string(replaceTitle), LINK, string(v.Link), 1)
-		var LIST = replace(string(replaceLink), CREATED, string(v.Created), 1)
-		buffer.WriteString(LIST)
+		items, _ := ioutil.ReadFile(itemTemplateFile)
+		str := strings.NewReplacer(NAME, string(v.Title), LINK, string(v.Link), CREATED, string(v.Created))
+		list := str.Replace(string(items))
+		buffer.WriteString(list)
 	}
 
 	index, _ := ioutil.ReadFile(indexTemplateFile)
-	var postHTML = replace(string(index), POST, buffer.String(), 1)
-	var indexContent = replace(string(postHTML), SITENAME, sitename, 1)
+	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename)
+	indexContent := indexStr.Replace(string(index))
 	ioutil.WriteFile(targetDir+"/"+HOME, []byte(indexContent), 0644)
 
 	if runtime.GOOS == "windows" {
