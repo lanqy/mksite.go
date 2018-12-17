@@ -27,4 +27,10 @@ for example:
 go run ./mksite.go
 ```
 
+### or build .exe
+```text
+go build -o mksite.exe ./mksite.go
+```
+
+
 then you got a website on website folder :)
