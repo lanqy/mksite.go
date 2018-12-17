@@ -28,7 +28,7 @@ type data struct {
 	Created     string
 }
 
-// Item struck
+// Item struct
 type Item struct {
 	Title   string `json:"title"`
 	Link    string `json:"link"`
@@ -39,19 +39,19 @@ type Feed struct {
 	XMLName xml.Name `xml:"feed"`
 	Xmlns   string   `xml:"xmlns,attr"`
 	Title   string   `xml:"title"`
-	Link    link     `xml:"link"`
+	Link    Link     `xml:"link"`
 	Summary string   `xml:"summary"`
 	Entrys  []entry  `xml:"entry"`
 }
 
 type entry struct {
 	Title   string `xml:"title"`
-	Link    link   `xml:"link"`
+	Link    Link   `xml:"link"`
 	Summary string `xml:"summary"`
 	Author  string `xml:"author"`
 }
 
-type link struct {
+type Link struct {
 	XMLName xml.Name `xml:link`
 	Href    string   `xml:"href,attr"`
 }
@@ -211,13 +211,13 @@ func main() {
 		return p1 > p2
 	})
 
-	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: link{Href: DOMAIN}, Summary: sitename}
+	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: Link{Href: DOMAIN}, Summary: sitename}
 
 	for _, v := range results {
 		items, _ := ioutil.ReadFile(itemTemplateFile)
 		str := strings.NewReplacer(NAME, string(v.Title), LINK, string(v.Link), CREATED, string(v.Created))
 		list := str.Replace(string(items))
-		feedrss.Entrys = append(feedrss.Entrys, entry{string(v.Title), link{Href: string(v.Link)}, string(v.Title), "lanqy"})
+		feedrss.Entrys = append(feedrss.Entrys, entry{string(v.Title), Link{Href: string(v.Link)}, string(v.Title), "lanqy"})
 		buffer.WriteString(list)
 	}
 
@@ -225,7 +225,7 @@ func main() {
 
 	checkErr(err)
 
-	ioutil.WriteFile(atomFile, []byte(xml.Header+string(op)), 0644) // create atom.xml
+	ioutil.WriteFile(targetDir+"/"+atomFile, []byte(xml.Header+string(op)), 0644) // create atom.xml
 
 	index, _ := ioutil.ReadFile(indexTemplateFile)
 	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename)
