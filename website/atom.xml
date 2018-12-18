@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <feed xmlns="http://www.w3.org/2005/Atom">
+      <title>site name here</title>
+      <link href="https://lanqy.xyz"></link>
+      <summary>site name here</summary>
+      <entry>
+          <title>test</title>
+          <link href="/2016/07/14/test"></link>
+          <summary>test</summary>
+          <author>lanqy</author>
+      </entry>
+  </feed>

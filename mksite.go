@@ -139,29 +139,18 @@ func main() {
 			fileName := "index" + htmlExt
 
 			if string(d.Created) != "" && re.MatchString(d.Created) {
-
-				date := strings.Split(replace(d.Created, "/", "-", 3), "-")
-
-				yearPath := targetDir + "/" + date[0]
-
-				yearMonthPath := yearPath + "/" + date[1]
-
-				yearMonthDayPath := yearMonthPath + "/" + date[2]
-
-				fullPath = yearMonthDayPath + "/" + htmlFileName
-
-				createFolder(yearPath)
-
-				createFolder(yearMonthPath)
-
-				createFolder(yearMonthDayPath)
-
-				createFolder(fullPath)
-
+				dateSplit := strings.Split(replace(d.Created, "/", "-", 3), "-")
+				path := strings.Join(dateSplit, "/")
+				fullPath = targetDir + "/" + path
 			} else {
-				fullPath = targetDir + "/" + htmlFileName
-				createFolder(fullPath)
+				fullPath = targetDir
 			}
+
+			fullPath = fullPath + "/" + htmlFileName
+
+			fmt.Println(fullPath)
+
+			createFolder(fullPath)
 
 			var item = make(map[string]interface{})
 			item["title"] = string(d.Title)
@@ -170,7 +159,7 @@ func main() {
 
 			listArr = append(listArr, item)
 
-			ioutil.WriteFile(fullPath+"/"+fileName, []byte(htmlString), 0644)
+			writeFile(fullPath+"/"+fileName, []byte(htmlString))
 
 			if runtime.GOOS == "windows" {
 				fmt.Printf("\nBuilding file from %s to "+fullPath+"/"+fileName+" done!\n", fromDir+htmlFileName+ext)
@@ -184,7 +173,7 @@ func main() {
 
 	jsonbytes, _ := json.Marshal(listArr)
 
-	ioutil.WriteFile(dataJSON, []byte(jsonbytes), 0644)
+	writeFile(dataJSON, []byte(jsonbytes))
 
 	dataFile, err := os.Open(dataJSON)
 
@@ -225,12 +214,13 @@ func main() {
 
 	checkErr(err)
 
-	ioutil.WriteFile(targetDir+"/"+atomFile, []byte(xml.Header+string(op)), 0644) // create atom.xml
+	writeFile(targetDir+"/"+atomFile, []byte(xml.Header+string(op))) // create atom.xml
 
 	index, _ := ioutil.ReadFile(indexTemplateFile)
 	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename)
 	indexContent := indexStr.Replace(string(index))
-	ioutil.WriteFile(targetDir+"/"+HOME, []byte(indexContent), 0644)
+
+	writeFile(targetDir+"/"+HOME, []byte(indexContent))
 
 	if runtime.GOOS == "windows" {
 		fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
@@ -240,6 +230,30 @@ func main() {
 		fmt.Println(msg)
 		runtime := ansi.Color("\nBuild in "+time.Since(beginTime).String(), "green+b")
 		fmt.Println(runtime)
+	}
+}
+
+// Write file
+func writeFile(filePath string, fileData []byte) {
+	ioutil.WriteFile(filePath, fileData, 0644)
+}
+
+// create Folder by filepath
+func createFolder(filePath string) {
+	if _, err := os.Stat(filePath); err != nil {
+		if os.IsNotExist(err) { // file does not exist
+			os.MkdirAll(filePath, os.ModePerm)
+		}
+	}
+}
+
+func replace(str string, hold string, s string, n int) string {
+	return strings.Replace(str, hold, s, n)
+}
+
+func checkErr(err error) { // check error
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -326,22 +340,4 @@ func lcopy(src, dest string, info os.FileInfo) error {
 		return err
 	}
 	return os.Symlink(src, dest)
-}
-
-func createFolder(name string) {
-	if _, err := os.Stat(name); err != nil {
-		if os.IsNotExist(err) { // file does not exist
-			os.Mkdir(name, os.ModePerm)
-		}
-	}
-}
-
-func replace(str string, hold string, s string, n int) string {
-	return strings.Replace(str, hold, s, n)
-}
-
-func checkErr(err error) { // check error
-	if err != nil {
-		log.Fatal(err)
-	}
 }
