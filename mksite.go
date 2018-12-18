@@ -148,8 +148,6 @@ func main() {
 
 			fullPath = fullPath + "/" + htmlFileName
 
-			fmt.Println(fullPath)
-
 			createFolder(fullPath)
 
 			var item = make(map[string]interface{})
