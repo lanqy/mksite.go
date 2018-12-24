@@ -89,7 +89,6 @@ func main() {
 		POST        = "$post"
 		CREATED     = "$created"
 		SITENAME    = "$sitename"
-		DOMAIN      = "https://lanqy.xyz"
 		XMLNS       = "http://www.w3.org/2005/Atom"
 	)
 
@@ -107,6 +106,7 @@ func main() {
 	itemTemplateFile := result["itemTemplateFile"].(string)
 	staticDir := result["staticDir"].(string)
 	sitename := result["siteName"].(string)
+	baseurl := result["baseUrl"].(string)
 
 	createFolder(targetDir)
 
@@ -200,7 +200,7 @@ func main() {
 		return p1 > p2
 	})
 
-	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: Link{Href: DOMAIN}, Summary: sitename}
+	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: Link{Href: baseurl}, Summary: sitename}
 
 	for _, v := range results {
 		items, _ := ioutil.ReadFile(itemTemplateFile)
@@ -224,11 +224,11 @@ func main() {
 
 	if runtime.GOOS == "windows" {
 		fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
-		fmt.Printf("\nBuild in %s \n\n", time.Since(beginTime))
+		fmt.Printf("\nDone in %s \n\n", time.Since(beginTime))
 	} else {
 		msg := ansi.Color("\nBuilding home file to "+targetDir+"/"+HOME, "green+b")
 		fmt.Println(msg)
-		runtime := ansi.Color("\nBuild in "+time.Since(beginTime).String(), "green+b")
+		runtime := ansi.Color("\nDone in "+time.Since(beginTime).String(), "green+b")
 		fmt.Println(runtime)
 	}
 }
