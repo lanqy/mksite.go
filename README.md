@@ -2,7 +2,7 @@
 
 Build html file from markdown folder
 
-### Usage
+## Usage
 
 -   create markdown files folder
 -   create html template
@@ -17,19 +17,20 @@ for example:
     "baseUrl": "https://lanqy.xyz",
     "sourceDir": "source/_posts/*",
     "targetDir": "website",
-    "templateFile": "template/tpl.html",
+    "postTemplateFile": "template/post.html",
+    "navTemplateFile": "template/nav.html",
     "indexTemplateFile": "template/index.html",
     "itemTemplateFile": "template/item.html"
 }
 ```
 
-### run
+## run
 
 ```text
 go run ./mksite.go
 ```
 
-### or build .exe
+## or build .exe
 
 ```text
 go build -o mksite.exe ./mksite.go
