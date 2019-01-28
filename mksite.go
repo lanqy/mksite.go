@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/daryl/fmatter"
-	"github.com/mgutz/ansi"
-	"github.com/russross/blackfriday"
 	"io"
 	"io/ioutil"
 	"log"
@@ -19,6 +16,31 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/daryl/fmatter"
+	"github.com/mgutz/ansi"
+	"github.com/russross/blackfriday"
+)
+
+const (
+	htmlExt    = ".html"
+	mdExt      = ".md"
+	HOME       = "index.html"
+	CONFIGFile = "config.json"
+	DATAJSON   = "data.json"
+	ATOMFile   = "atom.xml"
+
+	// placeholder
+	TITLE       = "$title"
+	DESCRIPTION = "$description"
+	BODY        = "$body"
+	LINK        = "$link"
+	NAME        = "$name"
+	POST        = "$post"
+	NAVS        = "$navs"
+	CREATED     = "$created"
+	SITENAME    = "$sitename"
+	XMLNS       = "http://www.w3.org/2005/Atom"
 )
 
 type data struct {
@@ -33,6 +55,11 @@ type Item struct {
 	Title   string `json:"title"`
 	Link    string `json:"link"`
 	Created string `json:"created"`
+}
+
+type Results struct {
+	Posts []Item `json:"posts"`
+	Pages []Item `json:"pages"`
 }
 
 type Feed struct {
@@ -58,63 +85,125 @@ type Link struct {
 
 func main() {
 
-	// config json file
-	configFile := "config.json"
-
-	// data json file
-	dataJSON := "data.json"
-
-	// atom.xml file
-	atomFile := "atom.xml"
-
-	jsonFile, err := os.Open(configFile)
+	jsonFile, err := os.Open(CONFIGFile)
 
 	checkErr(err)
 
 	defer jsonFile.Close()
 
 	var result map[string]interface{}
-
-	const (
-		htmlExt = ".html"
-		mdExt   = ".md"
-		HOME    = "index.html"
-
-		// placeholder
-		TITLE       = "$title"
-		DESCRIPTION = "$description"
-		BODY        = "$body"
-		LINK        = "$link"
-		NAME        = "$name"
-		POST        = "$post"
-		CREATED     = "$created"
-		SITENAME    = "$sitename"
-		XMLNS       = "http://www.w3.org/2005/Atom"
-	)
-
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal([]byte(byteValue), &result)
 	sourceDir := result["sourceDir"].(string)
-	fromDir := strings.Replace(sourceDir, "*", "", 1)
 	files, err := filepath.Glob(sourceDir)
+
+	pageDir := strings.Split(sourceDir, "/")
+
+	rawMdFiles := pageDir[0] + "/*" + mdExt
+
+	pageFiles, err := filepath.Glob(rawMdFiles)
 
 	checkErr(err)
 
 	targetDir := result["targetDir"].(string)
-	templateFile := result["templateFile"].(string)
-	indexTemplateFile := result["indexTemplateFile"].(string)
 	itemTemplateFile := result["itemTemplateFile"].(string)
+	indexTemplateFile := result["indexTemplateFile"].(string)
+	// navTemplateFile := result["navTemplateFile"].(string)
 	staticDir := result["staticDir"].(string)
 	sitename := result["siteName"].(string)
 	baseurl := result["baseUrl"].(string)
 
 	createFolder(targetDir)
 
+	var listArr []map[string]interface{}
+	var pageArr []map[string]interface{}
+	var jsons = make(map[string]interface{})
+	beginTime := time.Now()
+
+	navs := createNavs(pageFiles, result)
+
+	listArr = createFiles(files, result, navs)
+	pageArr = createFiles(pageFiles, result, navs)
+
+	jsons["posts"] = listArr
+	jsons["pages"] = pageArr
+
+	jsonbytes, _ := json.Marshal(jsons)
+
+	writeFile(targetDir+"/"+DATAJSON, []byte(jsonbytes))
+
+	dataFile, err := os.Open(targetDir + "/" + DATAJSON)
+
+	checkErr(err)
+
+	defer dataFile.Close()
+
+	byteValues, _ := ioutil.ReadAll(dataFile)
+
+	var results Results
+
+	json.Unmarshal(byteValues, &results)
+
+	Copy(staticDir, targetDir) // copy static file into targetDir
+
+	var buffer bytes.Buffer
+
+	var resultss = results.Posts
+
+	// sort json results
+	sort.Slice(resultss, func(i, j int) bool {
+		p1, err := strconv.Atoi(replace(resultss[i].Created, "-", "", 3)) // 2018-12-10 to 20181210
+		checkErr(err)
+		p2, err := strconv.Atoi(replace(resultss[j].Created, "-", "", 3))
+		checkErr(err)
+		return p1 > p2
+	})
+
+	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: Link{Href: baseurl}, Summary: sitename}
+
+	for _, v := range resultss {
+		items, _ := ioutil.ReadFile(itemTemplateFile)
+		str := strings.NewReplacer(NAME, string(v.Title), LINK, string(v.Link), CREATED, string(v.Created))
+		list := str.Replace(string(items))
+		feedrss.Entrys = append(feedrss.Entrys, entry{string(v.Title), Link{Href: string(v.Link)}, string(v.Title), "lanqy"})
+		buffer.WriteString(list)
+	}
+
+	op, err := xml.MarshalIndent(feedrss, "  ", "    ")
+
+	checkErr(err)
+
+	writeFile(targetDir+"/"+ATOMFile, []byte(xml.Header+string(op))) // create atom.xml
+
+	index, _ := ioutil.ReadFile(indexTemplateFile)
+	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename)
+	indexContent := indexStr.Replace(string(index))
+
+	writeFile(targetDir+"/"+HOME, []byte(indexContent))
+
+	if runtime.GOOS == "windows" {
+		fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
+		fmt.Printf("\nDone in %s \n\n", time.Since(beginTime))
+	} else {
+		msg := ansi.Color("\nBuilding home file to "+targetDir+"/"+HOME, "green+b")
+		fmt.Println(msg)
+		runtime := ansi.Color("\nDone in "+time.Since(beginTime).String(), "green+b")
+		fmt.Println(runtime)
+	}
+}
+
+func createFiles(files []string, config map[string]interface{}, navs bytes.Buffer) []map[string]interface{} {
+
 	// date regexp pattern
 	re := regexp.MustCompile("(\\d\\d\\d\\d)(/|-)(0?[1-9]|1[012])(/|-)(0?[1-9]|[12][0-9]|3[01])")
-	var listArr []map[string]interface{}
 
-	beginTime := time.Now()
+	// var posts Posts
+	var listArr []map[string]interface{}
+	targetDir := config["targetDir"].(string)
+	sourceDir := config["sourceDir"].(string)
+	fromDir := strings.Replace(sourceDir, "*", "", 1)
+	templateFile := config["postTemplateFile"].(string)
+	//navTemplateFile := config["navTemplateFile"].(string)
 
 	for _, file := range files {
 
@@ -122,7 +211,7 @@ func main() {
 		_file := filepath.Base(file)
 		if ext == mdExt { // markdown file
 			var d data
-			var fullPath = targetDir
+			var fullPath = config["targetDir"].(string)
 			body, _ := ioutil.ReadFile(file)
 
 			template, _ := ioutil.ReadFile(templateFile)
@@ -132,7 +221,7 @@ func main() {
 
 			html := string(blackfriday.MarkdownCommon([]byte(content)))
 
-			replacer := strings.NewReplacer(TITLE, string(d.Title), DESCRIPTION, string(d.Description), BODY, html)
+			replacer := strings.NewReplacer(TITLE, string(d.Title), DESCRIPTION, string(d.Description), BODY, html, NAVS, navs.String())
 
 			htmlString := replacer.Replace(string(template))
 
@@ -171,66 +260,26 @@ func main() {
 		}
 	}
 
-	jsonbytes, _ := json.Marshal(listArr)
+	return listArr
 
-	writeFile(dataJSON, []byte(jsonbytes))
+}
 
-	dataFile, err := os.Open(dataJSON)
-
-	checkErr(err)
-
-	defer dataFile.Close()
-
-	byteValues, _ := ioutil.ReadAll(dataFile)
-
-	var results []Item
-
-	json.Unmarshal([]byte(byteValues), &results)
-
-	Copy(staticDir, targetDir) // copy static file into targetDir
-
+func createNavs(pages []string, config map[string]interface{}) bytes.Buffer {
 	var buffer bytes.Buffer
-
-	// sort json results
-	sort.Slice(results, func(i, j int) bool {
-		p1, err := strconv.Atoi(replace(results[i].Created, "-", "", 3)) // 2018-12-10 to 20181210
-		checkErr(err)
-		p2, err := strconv.Atoi(replace(results[j].Created, "-", "", 3))
-		checkErr(err)
-		return p1 > p2
-	})
-
-	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: Link{Href: baseurl}, Summary: sitename}
-
-	for _, v := range results {
-		items, _ := ioutil.ReadFile(itemTemplateFile)
-		str := strings.NewReplacer(NAME, string(v.Title), LINK, string(v.Link), CREATED, string(v.Created))
-		list := str.Replace(string(items))
-		feedrss.Entrys = append(feedrss.Entrys, entry{string(v.Title), Link{Href: string(v.Link)}, string(v.Title), "lanqy"})
-		buffer.WriteString(list)
+	for _, v := range pages {
+		ext := filepath.Ext(v)
+		_file := filepath.Base(v)
+		if ext == mdExt { // markdown file
+			var d data
+			body, _ := ioutil.ReadFile(v)
+			items, _ := ioutil.ReadFile(config["navTemplateFile"].(string))
+			fmatter.Parse([]byte(body), &d)
+			str := strings.NewReplacer(NAME, string(d.Title), LINK, "/"+replace(_file, mdExt, "", 1))
+			list := str.Replace(string(items))
+			buffer.WriteString(list)
+		}
 	}
-
-	op, err := xml.MarshalIndent(feedrss, "  ", "    ")
-
-	checkErr(err)
-
-	writeFile(targetDir+"/"+atomFile, []byte(xml.Header+string(op))) // create atom.xml
-
-	index, _ := ioutil.ReadFile(indexTemplateFile)
-	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename)
-	indexContent := indexStr.Replace(string(index))
-
-	writeFile(targetDir+"/"+HOME, []byte(indexContent))
-
-	if runtime.GOOS == "windows" {
-		fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
-		fmt.Printf("\nDone in %s \n\n", time.Since(beginTime))
-	} else {
-		msg := ansi.Color("\nBuilding home file to "+targetDir+"/"+HOME, "green+b")
-		fmt.Println(msg)
-		runtime := ansi.Color("\nDone in "+time.Since(beginTime).String(), "green+b")
-		fmt.Println(runtime)
-	}
+	return buffer
 }
 
 // Write file

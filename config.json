@@ -4,7 +4,8 @@
     "baseUrl": "https://lanqy.xyz",
     "sourceDir": "source/_posts/*",
     "targetDir": "website",
-    "templateFile": "template/tpl.html",
+    "postTemplateFile": "template/post.html",
+    "navTemplateFile": "template/nav.html",
     "indexTemplateFile": "template/index.html",
     "itemTemplateFile": "template/item.html"
 }
