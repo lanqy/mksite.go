@@ -108,7 +108,6 @@ func main() {
 	targetDir := result["targetDir"].(string)
 	itemTemplateFile := result["itemTemplateFile"].(string)
 	indexTemplateFile := result["indexTemplateFile"].(string)
-	// navTemplateFile := result["navTemplateFile"].(string)
 	staticDir := result["staticDir"].(string)
 	sitename := result["siteName"].(string)
 	baseurl := result["baseUrl"].(string)
@@ -148,20 +147,20 @@ func main() {
 
 	var buffer bytes.Buffer
 
-	var resultss = results.Posts
+	var posts = results.Posts
 
 	// sort json results
-	sort.Slice(resultss, func(i, j int) bool {
-		p1, err := strconv.Atoi(replace(resultss[i].Created, "-", "", 3)) // 2018-12-10 to 20181210
+	sort.Slice(posts, func(i, j int) bool {
+		p1, err := strconv.Atoi(replace(posts[i].Created, "-", "", 3)) // 2018-12-10 to 20181210
 		checkErr(err)
-		p2, err := strconv.Atoi(replace(resultss[j].Created, "-", "", 3))
+		p2, err := strconv.Atoi(replace(posts[j].Created, "-", "", 3))
 		checkErr(err)
 		return p1 > p2
 	})
 
 	feedrss := &Feed{Xmlns: XMLNS, Title: sitename, Link: Link{Href: baseurl}, Summary: sitename}
 
-	for _, v := range resultss {
+	for _, v := range posts {
 		items, _ := ioutil.ReadFile(itemTemplateFile)
 		str := strings.NewReplacer(NAME, string(v.Title), LINK, string(v.Link), CREATED, string(v.Created))
 		list := str.Replace(string(items))
@@ -206,7 +205,6 @@ func createFiles(files []string, config map[string]interface{}, navs bytes.Buffe
 	//navTemplateFile := config["navTemplateFile"].(string)
 
 	for _, file := range files {
-
 		ext := filepath.Ext(file)
 		_file := filepath.Base(file)
 		if ext == mdExt { // markdown file
