@@ -175,7 +175,7 @@ func main() {
 	writeFile(targetDir+"/"+ATOMFile, []byte(xml.Header+string(op))) // create atom.xml
 
 	index, _ := ioutil.ReadFile(indexTemplateFile)
-	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename)
+	indexStr := strings.NewReplacer(POST, buffer.String(), SITENAME, sitename, NAVS, navs.String())
 	indexContent := indexStr.Replace(string(index))
 
 	writeFile(targetDir+"/"+HOME, []byte(indexContent))
