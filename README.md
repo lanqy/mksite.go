@@ -37,3 +37,7 @@ go build -o mksite.exe ./mksite.go
 ```
 
 then you got a website on website folder :)
+
+## Use node.js ?
+
+----> https://github.com/lanqy/mksite
