@@ -39,6 +39,10 @@ go build -o mksite.exe ./mksite.go
 
 then you got a website on website folder :)
 
+## note 
+
+not work with ```go get``` install if you use windows
+
 ## Use node.js ?
 
 ----> https://github.com/lanqy/mksite
