@@ -3,8 +3,7 @@ title: test
 description: some description
 created: 2016-07-14
 author: lanqy
+tags: a,b,c
 ---
-# test
 
-It works!
-
+# test It works!

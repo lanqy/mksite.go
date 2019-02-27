@@ -37,6 +37,8 @@ const (
 	LINK        = "$link"
 	NAME        = "$name"
 	POST        = "$post"
+	TAG         = "$tag"
+	TAGS        = "$tags"
 	NAVS        = "$navs"
 	CREATED     = "$created"
 	SITENAME    = "$sitename"
@@ -48,13 +50,15 @@ type data struct {
 	Description string
 	Author      string
 	Created     string
+	Tags        string
 }
 
 // Item struct
 type Item struct {
-	Title   string `json:"title"`
-	Link    string `json:"link"`
-	Created string `json:"created"`
+	Title   string   `json:"title"`
+	Link    string   `json:"link"`
+	Created string   `json:"created"`
+	Tags    []string `json:"tags"`
 }
 
 type Results struct {
@@ -202,7 +206,6 @@ func createFiles(files []string, config map[string]interface{}, navs bytes.Buffe
 	sourceDir := config["sourceDir"].(string)
 	fromDir := strings.Replace(sourceDir, "*", "", 1)
 	templateFile := config["postTemplateFile"].(string)
-	//navTemplateFile := config["navTemplateFile"].(string)
 
 	for _, file := range files {
 		ext := filepath.Ext(file)
@@ -212,14 +215,27 @@ func createFiles(files []string, config map[string]interface{}, navs bytes.Buffe
 			var fullPath = config["targetDir"].(string)
 			body, _ := ioutil.ReadFile(file)
 
+			var tagBuffer bytes.Buffer
+
 			template, _ := ioutil.ReadFile(templateFile)
 			content, err := fmatter.Parse([]byte(body), &d)
 
+			tags := strings.Split(d.Tags, ",")
+
 			checkErr(err)
+
+			tagTemplateFile := config["tagTemplateFile"].(string)
+
+			items, _ := ioutil.ReadFile(tagTemplateFile)
+			for _, tag := range tags {
+				str := strings.NewReplacer(TAG, string(tag))
+				list := str.Replace(string(items))
+				tagBuffer.WriteString(list)
+			}
 
 			html := string(blackfriday.MarkdownCommon([]byte(content)))
 
-			replacer := strings.NewReplacer(TITLE, string(d.Title), DESCRIPTION, string(d.Description), BODY, html, NAVS, navs.String())
+			replacer := strings.NewReplacer(TITLE, string(d.Title), DESCRIPTION, string(d.Description), BODY, html, NAVS, navs.String(), TAGS, tagBuffer.String())
 
 			htmlString := replacer.Replace(string(template))
 
@@ -243,6 +259,7 @@ func createFiles(files []string, config map[string]interface{}, navs bytes.Buffe
 			item["title"] = string(d.Title)
 			item["created"] = string(d.Created)
 			item["link"] = replace(string(fullPath), targetDir, "", 1)
+			item["tags"] = tags
 
 			listArr = append(listArr, item)
 

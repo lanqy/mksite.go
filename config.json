@@ -7,5 +7,6 @@
     "postTemplateFile": "template/post.html",
     "navTemplateFile": "template/nav.html",
     "indexTemplateFile": "template/index.html",
-    "itemTemplateFile": "template/item.html"
+    "itemTemplateFile": "template/item.html",
+    "tagTemplateFile": "template/tag.html"
 }
