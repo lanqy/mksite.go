@@ -20,6 +20,7 @@ for example:
     "postTemplateFile": "template/post.html",
     "navTemplateFile": "template/nav.html",
     "indexTemplateFile": "template/index.html",
+    "tagTemplateFile": "template/tag.html",
     "itemTemplateFile": "template/item.html"
 }
 ```
