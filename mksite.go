@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/daryl/fmatter"
-	"github.com/mgutz/ansi"
+	"github.com/adrg/frontmatter"
+	"github.com/fatih/color"
 	"github.com/russross/blackfriday"
 )
 
@@ -99,7 +99,7 @@ func main() {
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal([]byte(byteValue), &result)
 	sourceDir := result["sourceDir"].(string)
-	files, err := filepath.Glob(sourceDir)
+	files, _ := filepath.Glob(sourceDir)
 
 	pageDir := strings.Split(sourceDir, "/")
 
@@ -188,17 +188,16 @@ func main() {
 		fmt.Println("\nBuilding home file to " + targetDir + "/" + HOME)
 		fmt.Printf("\nDone in %s \n\n", time.Since(beginTime))
 	} else {
-		msg := ansi.Color("\nBuilding home file to "+targetDir+"/"+HOME, "green+b")
-		fmt.Println(msg)
-		runtime := ansi.Color("\nDone in "+time.Since(beginTime).String(), "green+b")
-		fmt.Println(runtime)
+		color.Green("\nBuilding home file to " + targetDir + "/" + HOME)
+		color.Green("\nDone in " + time.Since(beginTime).String())
 	}
+
 }
 
 func createFiles(files []string, config map[string]interface{}, navs bytes.Buffer) []map[string]interface{} {
 
 	// date regexp pattern
-	re := regexp.MustCompile("(\\d\\d\\d\\d)(/|-)(0?[1-9]|1[012])(/|-)(0?[1-9]|[12][0-9]|3[01])")
+	re := regexp.MustCompile(`(\\d\\d\\d\\d)(/|-)(0?[1-9]|1[012])(/|-)(0?[1-9]|[12][0-9]|3[01])`)
 
 	// var posts Posts
 	var listArr []map[string]interface{}
@@ -218,7 +217,7 @@ func createFiles(files []string, config map[string]interface{}, navs bytes.Buffe
 			var tagBuffer bytes.Buffer
 
 			template, _ := ioutil.ReadFile(templateFile)
-			content, err := fmatter.Parse([]byte(body), &d)
+			content, err := frontmatter.Parse(strings.NewReader(string([]byte(body))), &d)
 
 			tags := strings.Split(d.Tags, ",")
 
@@ -268,8 +267,7 @@ func createFiles(files []string, config map[string]interface{}, navs bytes.Buffe
 			if runtime.GOOS == "windows" {
 				fmt.Printf("\nBuilding file from %s to "+fullPath+"/"+fileName+" done!\n", fromDir+htmlFileName+ext)
 			} else {
-				text := ansi.Color("\nBuilding file from "+fromDir+htmlFileName+ext+" to "+fullPath+"/"+fileName+" done!\n", "green+b")
-				fmt.Println(text)
+				color.Green("\nBuilding file from " + fromDir + htmlFileName + ext + " to " + fullPath + "/" + fileName + " done!\n")
 			}
 
 		}
@@ -288,7 +286,7 @@ func createNavs(pages []string, config map[string]interface{}) bytes.Buffer {
 			var d data
 			body, _ := ioutil.ReadFile(v)
 			items, _ := ioutil.ReadFile(config["navTemplateFile"].(string))
-			fmatter.Parse([]byte(body), &d)
+			frontmatter.Parse(strings.NewReader(string([]byte(body))), &d)
 			str := strings.NewReplacer(NAME, string(d.Title), LINK, "/"+replace(_file, mdExt, "", 1))
 			list := str.Replace(string(items))
 			buffer.WriteString(list)
