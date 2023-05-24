@@ -45,4 +45,8 @@ not work with ```go get``` install if you use windows
 
 ## Use node.js ?
 
-----> https://github.com/lanqy/mksite
+Nodejs: https://github.com/lanqy/mksite
+
+## Use rust ?
+
+Rust: https://github.com/lanqy/mksite
