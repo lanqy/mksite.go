@@ -49,4 +49,4 @@ Nodejs: https://github.com/lanqy/mksite
 
 ## Use rust ?
 
-Rust: https://github.com/lanqy/mksite
+Rust: https://github.com/lanqy/mksite.rs
